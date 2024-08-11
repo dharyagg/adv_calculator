@@ -252,3 +252,166 @@ let calculator_buttons = [
 	},
 ];
 
+// create calculator button on ui by js
+function createButtons() {
+	const btnPerRow = 8;
+	let addedBtns = 0;
+
+	calculator_buttons.forEach((button) => {
+		if (addedBtns % btnPerRow == 0) {
+			inputElement.innerHTML += `<div class="row"></div>`;
+		}
+
+		const row = document.querySelector(".row:last-child");
+
+		row.innerHTML += `<button id="${button.name}">
+							${button.symbol}
+						</button>`;
+
+		addedBtns++;
+	});
+}
+createButtons();
+
+// radian or degree
+let RADIAN = true;
+const radBtn = document.getElementById("rad");
+const degBtn = document.getElementById("deg");
+
+radBtn.classList.add("active-angle");
+
+function angleToggler() {
+	radBtn.classList.toggle("active-angle");
+	degBtn.classList.toggle("active-angle");
+}
+
+// calculator buttons event listener
+inputElement.addEventListener("click", (e) => {
+	const targetBtn = e.target;
+
+	calculator_buttons.forEach((button) => {
+		if (button.name == targetBtn.id) {
+			calculator(button);
+		}
+	});
+});
+
+// the calculator function
+function calculator(button) {
+	if (button.type == "operator") {
+		data.operation.push(button.symbol);
+		data.formula.push(button.formula);
+	} else if (button.type == "number") {
+		data.operation.push(button.symbol);
+		data.formula.push(button.formula);
+	} else if (button.type == "trigo_function") {
+		data.operation.push(button.symbol + "(");
+		data.formula.push(button.formula);
+	} else if (button.type == "math_function") {
+		let symbol, formula;
+
+		if (button.name == "factorial") {
+			symbol = "!";
+			formula = button.formula;
+
+			data.operation.push(symbol);
+			data.formula.push(formula);
+		} else if (button.name == "power") {
+			symbol = "^(";
+			formula = button.formula;
+
+			data.operation.push(symbol);
+			data.formula.push(formula);
+		} else if (button.name == "square") {
+			symbol = "^(";
+			formula = button.formula;
+
+			data.operation.push(symbol);
+			data.formula.push(formula);
+
+			data.operation.push(2);
+			data.formula.push(2);
+		} else {
+			symbol = button.symbol + "(";
+			formula = button.formula + "(";
+
+			data.operation.push(symbol);
+			data.formula.push(formula);
+		}
+	} else if (button.type == "key") {
+		if (button.name == "clear") {
+			data.operation = [];
+			data.formula = [];
+
+			updateOutputResult(0);
+		} else if (button.name == "delete") {
+			data.operation.pop();
+			data.formula.pop();
+		} else if (button.name == "rad") {
+			RADIAN = true;
+			angleToggler();
+		} else if (button.name == "deg") {
+			RADIAN = false;
+			angleToggler();
+		}
+	} else if (button.type == "calculate") {
+		let formulaStr = data.formula.join("");
+
+		// solve power and factioral calculation
+		let powerSearchResult = search(data.formula, POWER);
+		let factorialSearchResult = search(data.formula, FACTORIAL);
+
+		// get power bases and replace with right formula
+		const bases = powerBaseGetter(data.formula, powerSearchResult);
+
+		bases.forEach((base) => {
+			let toReplace = base + POWER;
+			let replacement = "Math.pow(" + base + ",";
+
+			formulaStr = formulaStr.replace(toReplace, replacement);
+		});
+
+		// get factiorial number and replace with right formula
+		const numbers = factorialNumGetter(data.formula, factorialSearchResult);
+		numbers.forEach((factorial) => {
+			formulaStr = formulaStr.replace(
+				factorial.toReplace,
+				factorial.replacement
+			);
+		});
+
+		let result;
+		try {
+			result = eval(formulaStr);
+		} catch (error) {
+			if (error instanceof SyntaxError) {
+				result = "Syntax Error!";
+				updateOutputResult(result);
+				return;
+			}
+		}
+
+		// save result for later use
+		ans = result;
+		data.operation = [result];
+		data.formula = [result];
+
+		updateOutputResult(result);
+		return;
+	}
+
+	updateOutputOperation(data.operation.join(""));
+}
+// cube root ∛
+// search in an array
+function search(array, keyword) {
+	let searchResult = [];
+
+	array.forEach((item, index) => {
+		if (item == keyword) {
+			searchResult.push(index);
+		}
+	});
+
+	return searchResult;
+}
