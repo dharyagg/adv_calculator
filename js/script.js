@@ -415,3 +415,148 @@ function search(array, keyword) {
 
 	return searchResult;
 }
+
+// power base getter funciton
+function powerBaseGetter(formula, powerSearchResult) {
+	let powerBases = [];
+
+	powerSearchResult.forEach((powerIndex) => {
+		let base = []; //current base
+		let parenthesesCount = 0;
+		let previousIndex = powerIndex - 1;
+
+		while (previousIndex >= 0) {
+			if (formula[previousIndex] == "(") parenthesesCount--;
+			if (formula[previousIndex] == ")") parenthesesCount++;
+
+			let isOperator = false;
+			OPERATIONS.forEach((operator) => {
+				if (formula[previousIndex] == operator) isOperator = true;
+			});
+
+			let isPower = formula[previousIndex] == POWER;
+
+			if ((isOperator && parenthesesCount == 0) || isPower) break;
+
+			base.unshift(formula[previousIndex]);
+			previousIndex--;
+		}
+		powerBases.push(base.join(""));
+	});
+	return powerBases;
+}
+
+// factorial number gette function
+function factorialNumGetter(formula, factSearchResult) {
+	let factNumbers = [];
+	let factorialSequence = 0;
+
+	factSearchResult.forEach((factIndex) => {
+		let number = []; // current number
+		let nextIndex = factIndex + 1;
+		let nextInput = formula[nextIndex];
+
+		if (nextInput == FACTORIAL) {
+			factorialSequence++;
+			return;
+		}
+
+		// if there was a factorial sequence, we need to get the index of the very first factorial function
+		let firstFactorialIndex = factIndex - factorialSequence;
+		// to get the number right before it
+		let previousIndex = firstFactorialIndex - 1;
+		let parenthesesCount = 0;
+		while (previousIndex >= 0) {
+			if (formula[previousIndex] == "(") parenthesesCount--;
+			if (formula[previousIndex] == ")") parenthesesCount++;
+
+			let isOperator = false;
+			OPERATIONS.forEach((operator) => {
+				if (formula[previousIndex] == operator) isOperator = true;
+			});
+
+			if (isOperator && parenthesesCount == 0) break;
+
+			number.unshift(formula[previousIndex]);
+			previousIndex--;
+		}
+
+		let numberStr = number.join("");
+		const factorial = "factorial(";
+		const closeParenthesis = ")";
+		let times = factorialSequence + 1;
+
+		let toReplace = numberStr + FACTORIAL.repeat(times);
+		let replacement =
+			factorial.repeat(times) + numberStr + closeParenthesis.repeat(times);
+
+		factNumbers.push({
+			toReplace: toReplace,
+			replacement: replacement,
+		});
+		// reset factorialSequence
+		factorialSequence = 0;
+	});
+	return factNumbers;
+}
+
+// show operation on ui in realtime
+function updateOutputOperation(operation) {
+	outputOperationElement.innerHTML = operation;
+}
+// show result on ui in realtime
+function updateOutputResult(result) {
+	outputResultElement.innerHTML = result;
+}
+
+// trigonometric funciton
+function trigo(callback, angle) {
+	if (!RADIAN) {
+		angle = (angle * Math.PI) / 180;
+	}
+	return callback(angle);
+}
+
+// inversion trigonometric
+function inv_trigo(callback, value) {
+	let angle = callback(value);
+	if (!RADIAN) {
+		angle = (angle * 180) / Math.PI;
+	}
+	return angle;
+}
+
+// factorial funciton
+function factorial(number) {
+	if (number % 1 != 0) return gamma(number + 1);
+
+	if (number === 0 || number === 1) return 1;
+	let result = 1;
+	for (let i = number; i > 0; i--) {
+		result = result * i;
+		if (result === Infinity) return Infinity;
+	}
+	return result;
+}
+// gamma function
+function gamma(n) {
+	// accurate to about 15 decimal places
+	//some magic constants
+	var g = 7, // g represents the precision desired, p is the values of p[i] to plug into Lanczos' formula
+		p = [
+			0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+			771.32342877765313, -176.61502916214059, 12.507343278686905,
+			-0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7,
+		];
+	if (n < 0.5) {
+		return Math.PI / Math.sin(n * Math.PI) / gamma(1 - n);
+	} else {
+		n--;
+		var x = p[0];
+		for (var i = 1; i < g + 2; i++) {
+			x += p[i] / (n + i);
+		}
+		var t = n + g + 0.5;
+		return Math.sqrt(2 * Math.PI) * Math.pow(t, n + 0.5) * Math.exp(-t) * x;
+	}
+}
